@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRC</title>
+</head>
+
+<body>
+    <input id="nickname" type="text">
+    <input id="sendNick" type="submit">
+    <script>
+        document.querySelector('#sendNick').addEventListener('click', function () {
+            let nick = document.querySelector("#nickname").value;
+            if (nick != "") {
+                fetch("/login", {
+                    method: "post",
+                    body: JSON.stringify({ name: nick }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(
+                        function (u) { return u.json(); }
+                    ).then(
+                        function (json) {
+                            if (alert(json.message)) { }
+                            else window.location.reload();
+                        }
+                    )
+            } else {
+                alert("podaj nick");
+            }
+        });
+    </script>
+</body>
+
+</html>

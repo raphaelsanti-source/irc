@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #window {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #chat {
+            border: 1px solid black;
+            width: 80%;
+            height: 80vh;
+            margin-bottom: 10px;
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #message {
+            width: 80%;
+        }
+
+        .message {
+            width: 100%;
+            height: 60px;
+        }
+
+        .message p {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 20px;
+        }
+
+        ::-webkit-scrollbar-track {
+            box-shadow: inset 0 0 5px grey;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: red;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #b30000;
+        }
+    </style>
+    <link href="/emoty/jquery.cssemoticons.css" media="screen" rel="stylesheet" type="text/css" />
+    <script src="/emoty/jquery.js" type="text/javascript"></script>
+    <script src="/emoty/jquery.cssemoticons.js" type="text/javascript"></script>
+</head>
+
+<body>
+    <div id="window">
+        <div id="chat">
+
+        </div>
+        <input id="message" type="text">
+    </div>
+    <script>
+        document.addEventListener("keydown", event => {
+            let message = document.getElementById("message")
+            if (event.keyCode === 13 && message === document.activeElement) {
+                if (message.value != "") {
+                    let command = message.value.split(" ");
+                    switch (command[0]) {
+                        case '/nick':
+                            console.log("nick");
+                            let nick = "";
+                            for (let i = 1; i < command.length; i++) {
+                                if (i == 1) {
+                                    nick += command[i]
+                                } else {
+                                    nick += " " + command[i]
+                                }
+                            }
+                            fetch('/nick', {
+                                method: "post",
+                                body: JSON.stringify({ message: nick }),
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            })
+                                .then(
+                                    function (u) { return u.json(); }
+                                ).then(
+                                    function (json) {
+                                        if (json.message != "ok") {
+                                            alert(json.message);
+                                        }
+                                    }
+                                )
+                            break
+                        case '/color':
+                            fetch('/color', {
+                                method: "post",
+                                body: JSON.stringify({ message: command[1] }),
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            })
+                            break
+                        case '/quit':
+                            fetch('/quit', {
+                                method: "post"
+                            }).then(
+                                function (u) { return u.json(); }
+                            ).then(
+                                function (json) {
+                                    if (alert(json.message)) { }
+                                    else window.location.reload();
+                                }
+                            )
+                            break
+                        default:
+                            //console.log("message");
+                            fetch("/send", {
+                                method: "post",
+                                body: JSON.stringify({ message: message.value }),
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            })
+                            break
+                    }
+                    message.value = "";
+                }
+            }
+        })
+        function call() {
+            fetch('/messages', {
+                method: "post"
+            }).then(
+                function (u) { return u.json(); }
+            ).then(
+                function (json) {
+                    console.log(json.payload);
+                    if (json.payload != "no") {
+                        let msg = document.createElement("div");
+                        msg.className = "message"
+                        let data = new Date();
+                        let dataString = "";
+                        if (data.getHours() == 0) {
+                            dataString += "00:"
+                        }
+                        else if (data.getHours() < 10) {
+                            dataString += `0${data.getHours()}:`;
+                        } else {
+                            dataString += `${data.getHours()}:`;
+                        }
+                        if (data.getMinutes() == 0) {
+                            dataString += "00"
+                        }
+                        else if (data.getMinutes() < 10) {
+                            dataString += `0${data.getMinutes()}`;
+                        } else {
+                            dataString += data.getMinutes();
+                        }
+                        // msg.innerText += `[${dataString}]`;
+                        // let name = document.createElement("b");
+                        // name.style.color = `#${json.payload.color}`;
+                        // name.innerText = `<@${json.payload.who}>: `;
+                        // msg.appendChild(name);
+                        // msg.innerText += json.payload.text;
+                        let info = document.createElement("p");
+                        info.innerHTML = `[${dataString}]<<b style="color: #${json.payload.color};">@${json.payload.who}</b>>:`;
+                        msg.appendChild(info);
+                        let context = document.createElement("p");
+                        context.innerHTML = `${json.payload.text}`;
+                        context.className = "messageContent";
+                        msg.appendChild(context);
+                        document.getElementById("chat").appendChild(msg);
+                        $('.messageContent').emoticonize();
+                        document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight - document.getElementById("chat").clientHeight;
+                    }
+                    call()
+                }
+            )
+        }
+        call()
+    </script>
+</body>
+
+</html>
